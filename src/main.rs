@@ -10,8 +10,8 @@ use setwlkbmap::SetKeymap;
 #[derive(Parser, Debug)]
 #[clap(
     version = "0.1.0",
-    about = "Set Wayland Keyboard Map - A unified interface for keyboard layout in Wayland compositors",
-    long_about = "This CLI tool aims to provide a consistent way to set keyboard layouts,\nvariants, and XKB options across different Wayland compositors.\nIt currently supports GNOME (Mutter) and Sway (wlroots-based) environments."
+    about = "Set Wayland Keyboard Map - A unified interface for setting keyboard layout in Wayland compositors",
+    long_about = "This CLI tool aims to provide a consistent way to set keyboard layouts,\nvariants, and XKB options across different Wayland compositors."
 )]
 struct Args {
     /// Set the primary keyboard layout (e.g., 'us', 'de', 'fr')

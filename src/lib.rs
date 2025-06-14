@@ -31,7 +31,7 @@ impl SetKeymap for DesktopEnvironment {
             DesktopEnvironment::Tde => todo!(),
             DesktopEnvironment::Unity => todo!(),
             DesktopEnvironment::Windows => todo!(),
-            DesktopEnvironment::Xfce => todo!(),
+            DesktopEnvironment::Xfce => set_keymap_xfce(map, variant),
             de => Err(format!("settings keymap unimplemented for {de:?}")),
         }
     }
@@ -77,3 +77,34 @@ fn set_keymap_kde(layout: Option<String>, variant: Option<String>) -> Result<(),
     
     Ok(())
 }
+
+fn set_keymap_xfce(layout: Option<String>, variant: Option<String>) -> Result<(), String> {
+    // xfce uses `xfconf-query` to get and manage settings. Keyboard layouts are defined in the
+    // keyboard-layout category. We must first ensure overriding of keyboard settings is enabled. 
+
+    fn set_property(property: &str, value: &str) -> Result<(), String> {
+        Command::new("xfconf-query")
+            .arg("-c").arg("keyboard-layout")
+            .arg("-p").arg(property)
+            .arg("-s").arg(value)
+            .stdout(Stdio::null()).stderr(Stdio::null())
+            .status()
+            .map_err(|e| format!("Failed to execute xfconf-query: {}", e))
+            .and_then(|status| {
+                if status.success() { Ok(()) } else { Err("xfconf-query failed".to_string()) }
+            })
+    }
+
+    set_property("/Default/XkbDisable", "false")?;
+
+    if let Some(layout) = layout {
+        set_property("/Default/XkbLayout", &layout)?;
+    }
+
+    if let Some(variant) = variant {
+        set_property("/Default/XkbVariant", &variant)?;
+    }
+    
+    Ok(())
+}
+
