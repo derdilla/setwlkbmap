@@ -110,8 +110,7 @@ checksum = "b05b61dc5112cbb17e4b6cd61790d9845d13888356391624cbe7e41efeac1e75"
 [[package]]
 name = "detect-desktop-environment"
 version = "1.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ff7f16599c3ba6b4ab9a3195bcd9413a7ee8d51e7651f3e9efd6a5db5315008d"
+source = "git+https://github.com/derdilla/detect-desktop-environment.git#e48c409fb81b276d2976519807686a39815fb27a"
 
 [[package]]
 name = "heck"

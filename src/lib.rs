@@ -28,7 +28,7 @@ impl SetKeymap for DesktopEnvironment {
             DesktopEnvironment::Pantheon => todo!(),
             DesktopEnvironment::Razor => todo!(),
             DesktopEnvironment::Rox => todo!(),
-            DesktopEnvironment::Sway => todo!(),
+            DesktopEnvironment::Sway => set_keymap_sway(map, variant),
             DesktopEnvironment::Tde => todo!(),
             DesktopEnvironment::Unity => todo!(),
             DesktopEnvironment::Windows => todo!(),
@@ -167,11 +167,64 @@ fn set_keymap_gnome(layout: Option<String>, variant: Option<String>) -> Result<(
     Ok(())
 }
 
-fn set_keymap_cinnamon(layout: Option<String>, variant: Option<String>) -> Result<(), String> {
+fn set_keymap_cinnamon(_layout: Option<String>, _variant: Option<String>) -> Result<(), String> {
     Err("As of June 2025 cinnamon wayland is still experimental and doesn't yet support switching
  the keyboard layout. You can check if that's still the case by opening the keyboard settings dialog
  and looking for an 'Layout' tab. In case this changed consider opening an issue or submitting a
  patch at https://github.com/derdilla/setwlkbmap.".to_string())
+}
+
+fn set_keymap_sway(layout: Option<String>, variant: Option<String>) -> Result<(), String> {
+    // Sways configuration is stored at ~/.config/sway/config where something the following could be defined:
+    // input * {
+    //     xkb_layout "de"
+    //     xkb_variant "us"
+    // }
+    // 
+    // The easiest way to configure it during runtime is:
+    // swaymsg input type:keyboard xkb_layout "de"
+    // swaymsg input type:keyboard xkb_variant "us"
+    // This does however do the full check whether that layout actually exists after every command,
+    // so we need to first clear the old variant.
+    // 
+    // It also seems like sway may support org.freedesktop.locale1, but this support is be dependent on 
+    // the configuration.
+
+    Command::new("swaymsg")
+        .arg("input").arg("type:keyboard")
+        .arg("xkb_variant").arg("''")
+        .stdout(Stdio::null()).stderr(Stdio::inherit())
+        .status()
+        .map_err(|e| format!("Failed to execute swaymsg: {}", e))
+        .and_then(|status| {
+            if status.success() { Ok(()) } else { Err("swaymsg failed".to_string()) }
+        })?;
+
+    if let Some(layout) = layout {
+        Command::new("swaymsg")
+            .arg("input").arg("type:keyboard")
+            .arg("xkb_layout").arg(layout)
+            .stdout(Stdio::null()).stderr(Stdio::inherit())
+            .status()
+            .map_err(|e| format!("Failed to execute swaymsg: {}", e))
+            .and_then(|status| {
+                if status.success() { Ok(()) } else { Err("swaymsg failed".to_string()) }
+            })?;
+    }
+
+    if let Some(variant) = variant {
+        Command::new("swaymsg")
+            .arg("input").arg("type:keyboard")
+            .arg("xkb_variant").arg(variant)
+            .stdout(Stdio::null()).stderr(Stdio::inherit())
+            .status()
+            .map_err(|e| format!("Failed to execute swaymsg: {}", e))
+            .and_then(|status| {
+                if status.success() { Ok(()) } else { Err("swaymsg failed".to_string()) }
+            })?;
+    }
+    
+    Ok(())
 }
 
 
