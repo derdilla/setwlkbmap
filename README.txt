@@ -7,3 +7,6 @@ All code is available under the MIT license.
 Supported platforms
 -------------
 - KDE
+- xfce
+- Gnome
+- Cinnamon (no support from DE)

@@ -10,7 +10,7 @@ pub trait SetKeymap {
 impl SetKeymap for DesktopEnvironment {
     fn set_keymap(&self, map: Option<String>, variant: Option<String>) -> Result<(), String> {
         match self {
-            DesktopEnvironment::Cinnamon => todo!(),
+            DesktopEnvironment::Cinnamon => set_keymap_cinnamon(map, variant),
             DesktopEnvironment::Cosmic => todo!(),
             DesktopEnvironment::CosmicEpoch => todo!(),
             DesktopEnvironment::Dde => todo!(),
@@ -166,6 +166,14 @@ fn set_keymap_gnome(layout: Option<String>, variant: Option<String>) -> Result<(
 
     Ok(())
 }
+
+fn set_keymap_cinnamon(layout: Option<String>, variant: Option<String>) -> Result<(), String> {
+    Err("As of June 2025 cinnamon wayland is still experimental and doesn't yet support switching
+ the keyboard layout. You can check if that's still the case by opening the keyboard settings dialog
+ and looking for an 'Layout' tab. In case this changed consider opening an issue or submitting a
+ patch at https://github.com/derdilla/setwlkbmap.".to_string())
+}
+
 
 fn parse_gnome_output(formats: &str) -> Result<Vec<(String, Option<String>)>, String> {
     // Regex to match ('xkb', 'de+us') entries, capturing the de+us part in 2 groups
