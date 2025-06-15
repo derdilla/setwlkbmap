@@ -1,7 +1,11 @@
-use std::process::{Command, Stdio};
+use std::process::Command;
 use regex::Regex;
 
 use detect_desktop_environment::DesktopEnvironment;
+
+use crate::command::ExecutableWithError;
+
+mod command;
 
 pub trait SetKeymap {
     fn set_keymap(&self, map: Option<String>, variant: Option<String>) -> Result<(), String>;
@@ -54,12 +58,7 @@ fn set_keymap_kde(layout: Option<String>, variant: Option<String>) -> Result<(),
             .arg("--group").arg("Layout")
             .arg("--key").arg("LayoutList")
             .arg(layout)
-            .stdout(Stdio::null()).stderr(Stdio::null())
-            .status()
-            .map_err(|e| format!("Failed to execute kwriteconfig6: {}", e))
-            .and_then(|status| {
-                if status.success() { Ok(()) } else { Err("kwriteconfig6 failed".to_string()) }
-            })?;
+            .execute_with_err()?;
     }
 
     if let Some(variant) = variant {
@@ -68,12 +67,7 @@ fn set_keymap_kde(layout: Option<String>, variant: Option<String>) -> Result<(),
             .arg("--group").arg("Layout")
             .arg("--key").arg("VariantList")
             .arg(variant)
-            .stdout(Stdio::null()).stderr(Stdio::null())
-            .status()
-            .map_err(|e| format!("Failed to execute kwriteconfig6: {}", e))
-            .and_then(|status| {
-                if status.success() { Ok(()) } else { Err("kwriteconfig6 failed".to_string()) }
-            })?;
+            .execute_with_err()?;
     }
     
     Ok(())
@@ -88,12 +82,7 @@ fn set_keymap_xfce(layout: Option<String>, variant: Option<String>) -> Result<()
             .arg("-c").arg("keyboard-layout")
             .arg("-p").arg(property)
             .arg("-s").arg(value)
-            .stdout(Stdio::null()).stderr(Stdio::null())
-            .status()
-            .map_err(|e| format!("Failed to execute xfconf-query: {}", e))
-            .and_then(|status| {
-                if status.success() { Ok(()) } else { Err("xfconf-query failed".to_string()) }
-            })
+            .execute_with_err()
     }
 
     set_property("/Default/XkbDisable", "false")?;
@@ -122,12 +111,11 @@ fn set_keymap_gnome(layout: Option<String>, variant: Option<String>) -> Result<(
     };
     
     let formats = Command::new("gsettings")
-            .arg("get")
-            .arg("org.gnome.desktop.input-sources")
-            .arg("sources")
-            .stdout(Stdio::piped())
-            .output()
-            .map_err(|e| format!("Error: Failed to execute gsettings: {e:?}"))?;
+        .arg("get")
+        .arg("org.gnome.desktop.input-sources")
+        .arg("sources")
+        .output()
+        .map_err(|e| format!("Error: Failed to execute gsettings: {e:?}"))?;
     let formats = String::from_utf8(formats.stdout).expect("gsettings returns utf8");
     let formats_list = parse_gnome_output(&formats)?;
 
@@ -144,12 +132,7 @@ fn set_keymap_gnome(layout: Option<String>, variant: Option<String>) -> Result<(
             .arg("set")
             .arg("org.gnome.desktop.input-sources")
             .arg("sources").arg(formats)
-            .stdout(Stdio::null()).stderr(Stdio::null())
-            .status()
-            .map_err(|e| format!("Failed to execute gsettings: {}", e))
-            .and_then(|status| {
-                if status.success() { Ok(()) } else { Err("gsettings failed".to_string()) }
-            }).unwrap();// TODO: propagate error properly
+            .execute_with_err().unwrap();// TODO: propagate error properly
         formats_list.len()
     });
 
@@ -157,12 +140,7 @@ fn set_keymap_gnome(layout: Option<String>, variant: Option<String>) -> Result<(
         .arg("set")
         .arg("org.gnome.desktop.input-sources")
         .arg("current").arg(index.to_string())
-        .stdout(Stdio::null()).stderr(Stdio::null())
-        .status()
-        .map_err(|e| format!("Failed to execute gsettings: {}", e))
-        .and_then(|status| {
-            if status.success() { Ok(()) } else { Err("gsettings failed".to_string()) }
-        })?;
+        .execute_with_err()?;
 
     Ok(())
 }
@@ -193,35 +171,20 @@ fn set_keymap_sway(layout: Option<String>, variant: Option<String>) -> Result<()
     Command::new("swaymsg")
         .arg("input").arg("type:keyboard")
         .arg("xkb_variant").arg("''")
-        .stdout(Stdio::null()).stderr(Stdio::inherit())
-        .status()
-        .map_err(|e| format!("Failed to execute swaymsg: {}", e))
-        .and_then(|status| {
-            if status.success() { Ok(()) } else { Err("swaymsg failed".to_string()) }
-        })?;
+        .execute_with_err()?;
 
     if let Some(layout) = layout {
         Command::new("swaymsg")
             .arg("input").arg("type:keyboard")
             .arg("xkb_layout").arg(layout)
-            .stdout(Stdio::null()).stderr(Stdio::inherit())
-            .status()
-            .map_err(|e| format!("Failed to execute swaymsg: {}", e))
-            .and_then(|status| {
-                if status.success() { Ok(()) } else { Err("swaymsg failed".to_string()) }
-            })?;
+            .execute_with_err()?;
     }
 
     if let Some(variant) = variant {
         Command::new("swaymsg")
             .arg("input").arg("type:keyboard")
             .arg("xkb_variant").arg(variant)
-            .stdout(Stdio::null()).stderr(Stdio::inherit())
-            .status()
-            .map_err(|e| format!("Failed to execute swaymsg: {}", e))
-            .and_then(|status| {
-                if status.success() { Ok(()) } else { Err("swaymsg failed".to_string()) }
-            })?;
+            .execute_with_err()?;
     }
     
     Ok(())

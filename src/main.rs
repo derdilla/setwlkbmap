@@ -40,7 +40,7 @@ fn main() {
     }
 
     if args.layout.is_none() && args.variant.is_none() {
-        eprintln!("Error: Please provide at least one of --layout, --variant, or --options, or use --detect.");
+        eprintln!("Error: Please provide a layout or variant, or use --detect (See --help).");
         return;
     }
 
