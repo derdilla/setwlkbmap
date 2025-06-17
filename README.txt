@@ -10,3 +10,5 @@ Supported platforms
 - xfce
 - Gnome
 - Cinnamon (no support from DE)
+- sway
+- Hyprland

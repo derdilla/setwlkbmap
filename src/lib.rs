@@ -1,9 +1,11 @@
-use std::process::Command;
 use regex::Regex;
-
-use detect_desktop_environment::DesktopEnvironment;
-
+use std::fs::OpenOptions;
+use std::io::Write;
+use std::process::Command;
+use std::env;
+use std::path::PathBuf;
 use crate::command::ExecutableWithError;
+use detect_desktop_environment::DesktopEnvironment;
 
 mod command;
 
@@ -22,7 +24,7 @@ impl SetKeymap for DesktopEnvironment {
             DesktopEnvironment::Endless => todo!(),
             DesktopEnvironment::Enlightenment => todo!(),
             DesktopEnvironment::Gnome => set_keymap_gnome(map, variant),
-            DesktopEnvironment::Hyprland => todo!(),
+            DesktopEnvironment::Hyprland => set_keymap_hyprland(map, variant),
             DesktopEnvironment::Kde => set_keymap_kde(map, variant),
             DesktopEnvironment::Lxde => todo!(),
             DesktopEnvironment::Lxqt => todo!(),
@@ -40,9 +42,6 @@ impl SetKeymap for DesktopEnvironment {
             de => Err(format!("settings keymap unimplemented for {de:?}")),
         }
     }
-
-    
-
 }
 
 fn set_keymap_kde(layout: Option<String>, variant: Option<String>) -> Result<(), String> {
@@ -187,6 +186,52 @@ fn set_keymap_sway(layout: Option<String>, variant: Option<String>) -> Result<()
             .execute_with_err()?;
     }
     
+    Ok(())
+}
+
+fn set_keymap_hyprland(layout: Option<String>, variant: Option<String>) -> Result<(), String> {
+    // We can parse the current configuration from: `hyprctl getoption input:kb_layout`
+    // 
+    // I couldn't find a way to ensure we get the correct hyprland configuration file, in case it's
+    // not at .config/hypr/hyprland.conf. We need to parse that file and any file it includes until
+    // we find a non commented-out `kb_layout`/`kb-variant`. We need to modify that if it exists or
+    // otherwise create our own file with the config and include that.
+    //
+    // What also "works" is just adding our own `input` section to the bottom of the file. Since its
+    // easier and less likely to fail horribly when the file format changes, that's what we will do
+    // instead.
+    //
+    // In most configs the configurations the config change will auto-reload, but since this _can_
+    // be disabled we still do that ourselves.
+    
+    let mut config = String::new();
+    if let Some(layout) = layout {
+        config.push_str(&format!("input:kb_layout = {layout}\n"));
+    }
+    if let Some(variant) = variant {
+        config.push_str(&format!("input:kb_variant = {variant}\n"));
+    }
+    if config.is_empty() {
+        return Ok(())
+    }
+
+
+    let config_dir = env::var("XDG_CONFIG_HOME")
+        .unwrap_or("~/.config".to_string());
+    let config_dir = PathBuf::from(config_dir);
+    let config_file = config_dir.join("hypr").join("hyprland.conf");
+    let mut config_file = OpenOptions::new().append(true).open(&config_file)
+        .map_err(|_| format!("Error: Failed to open config file at: {}", config_file.display()))?;
+    
+    config_file.write(format!("\n# --- Begin setwlkeymap generated ---\n\
+{config}\
+# --- End setwlkeymap generated ---\n").as_bytes())
+        .map_err(|e| format!("Error: Failed to write config file: {e}"))?;
+    
+    
+    Command::new("hyprctl")
+        .arg("reload")
+        .execute_with_err()?;
     Ok(())
 }
 
