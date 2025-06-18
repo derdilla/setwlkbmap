@@ -1,11 +1,12 @@
+use crate::command::ExecutableWithError;
+use cosmic_config::{ConfigGet, ConfigSet};
+use detect_desktop_environment::DesktopEnvironment;
 use regex::Regex;
+use std::env;
 use std::fs::OpenOptions;
 use std::io::Write;
-use std::process::Command;
-use std::env;
 use std::path::PathBuf;
-use crate::command::ExecutableWithError;
-use detect_desktop_environment::DesktopEnvironment;
+use std::process::Command;
 
 mod command;
 
@@ -18,7 +19,7 @@ impl SetKeymap for DesktopEnvironment {
         match self {
             DesktopEnvironment::Cinnamon => set_keymap_cinnamon(map, variant),
             DesktopEnvironment::Cosmic => todo!(),
-            DesktopEnvironment::CosmicEpoch => todo!(),
+            DesktopEnvironment::CosmicEpoch => set_keymap_cosmic_epoch(map, variant),
             DesktopEnvironment::Dde => todo!(),
             DesktopEnvironment::Ede => todo!(),
             DesktopEnvironment::Endless => todo!(),
@@ -232,6 +233,29 @@ fn set_keymap_hyprland(layout: Option<String>, variant: Option<String>) -> Resul
     Command::new("hyprctl")
         .arg("reload")
         .execute_with_err()?;
+    Ok(())
+}
+
+
+const COSMIC_COMP_CONFIG: &str = "com.system76.CosmicComp";
+const COSMIC_COMP_CONFIG_VERSION: u64 = 1;
+fn set_keymap_cosmic_epoch(layout: Option<String>, variant: Option<String>) -> Result<(), String> {
+    // Do it the same way their settings app does it:
+    // https://github.com/pop-os/cosmic-settings/blob/master/cosmic-settings/src/pages/input/keyboard/mod.rs
+
+    let conf = cosmic_config::Config::new(COSMIC_COMP_CONFIG, COSMIC_COMP_CONFIG_VERSION)
+        .map_err(|e| format!("Error: Failed to load cosmic config: {e}"))?;
+    let mut xkb_conf: cosmic_comp_config::XkbConfig = conf.get("xkb_config")
+        .map_err(|e| format!("Error: Failed to set xkb_config: {e}"))?;
+    if let Some(layout) = layout {
+        xkb_conf.layout = layout;
+    }
+    if let Some(variant) = variant {
+        xkb_conf.variant = variant;
+    }
+    conf.set("xkb_config", xkb_conf)
+        .map_err(|e| format!("Error: Failed to set xkb_config: {e}"))?;
+
     Ok(())
 }
 
