@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 //! Set Wayland Keyboard Map - A unified interface for keyboard layout in Wayland
 //! 
 //! This is the binary entry point for the setwlkbmap utility.
@@ -46,7 +48,7 @@ fn main() {
 
     
     match de.set_keymap(args.layout, args.variant) {
-        Ok(_) => println!("Keymap set"),
+        Ok(()) => println!("Keymap set"),
         Err(err) => eprintln!("Error: {err}"),
     }
 }

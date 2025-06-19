@@ -29,7 +29,7 @@ impl ExecutableWithError for Command {
         let tool_name = self.get_program().to_str().unwrap().to_string();
         let args = self.get_args()
             .map(|arg| arg.to_str().unwrap())
-            .map(|arg| if arg.contains(" ") { format!("\"{arg}\"") } else { arg.to_string() })
+            .map(|arg| if arg.contains(' ') { format!("\"{arg}\"") } else { arg.to_string() })
             .collect::<Vec<String>>()
             .join(" ");
         if args.is_empty() {
@@ -53,6 +53,6 @@ mod tests {
         assert_eq!(Command::new("This")
             .arg("was")
             .arg("a Triumph")
-            .arg("!").as_shell_cmd(), "This was \"a Triumph\" !")
+            .arg("!").as_shell_cmd(), "This was \"a Triumph\" !");
     }
 }

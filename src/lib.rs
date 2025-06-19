@@ -1,3 +1,6 @@
+#![deny(clippy::pedantic)]
+#![allow(clippy::missing_errors_doc)]
+
 use crate::command::ExecutableWithError;
 use cosmic_config::{ConfigGet, ConfigSet};
 use detect_desktop_environment::DesktopEnvironment;
@@ -117,15 +120,15 @@ fn set_keymap_gnome(layout: Option<String>, variant: Option<String>) -> Result<(
         .output()
         .map_err(|e| format!("Error: Failed to execute gsettings: {e:?}"))?;
     let formats = String::from_utf8(formats.stdout).expect("gsettings returns utf8");
-    let formats_list = parse_gnome_output(&formats)?;
+    let formats_list = parse_gnome_output(&formats);
 
     let index = formats_list.iter().position(|e| e.0 == layout && e.1 == variant);
     let index = index.unwrap_or_else(|| {
-        let variant = variant.map(|v| format!("+{v}")).unwrap_or(String::new());
+        let variant = variant.map(|v| format!("+{v}")).unwrap_or_default();
         let formats = if formats.is_empty() {
             format!("[('xkb', '{layout}{variant}')]")
         } else {
-            formats.replace("]", &format!(", ('xkb', '{layout}{variant}')]"))
+            formats.replace(']', &format!(", ('xkb', '{layout}{variant}')]"))
         };
         //println!("gsettings set org.gnome.desktop.input-sources sources {formats}");
         Command::new("gsettings")
@@ -260,19 +263,18 @@ fn set_keymap_cosmic_epoch(layout: Option<String>, variant: Option<String>) -> R
 }
 
 
-fn parse_gnome_output(formats: &str) -> Result<Vec<(String, Option<String>)>, String> {
+fn parse_gnome_output(formats: &str) -> Vec<(String, Option<String>)> {
     // Regex to match ('xkb', 'de+us') entries, capturing the de+us part in 2 groups
     let formats_regex = Regex::new(r"\('xkb', '(\w*)(\+\w*)?'\)").unwrap();
 
-    let formats = formats_regex.captures_iter(&formats);
+    let formats = formats_regex.captures_iter(formats);
 
-    let formats = formats
+    formats
         .map(|c| (
             c.get(1).unwrap().as_str().to_string(),
             c.get(2).map(|c| c.as_str()[1..].to_string()),
         ))
-        .collect::<Vec<(String, Option<String>)>>();
-    Ok(formats)
+        .collect::<Vec<(String, Option<String>)>>()
 }
 
 #[cfg(test)]
@@ -280,12 +282,10 @@ mod tests {
     #[test]
     fn parses_gnome_output_correctly() {
         let result = super::parse_gnome_output("[('xkb', 'us'), ('xkb', 'ca+eng')]");
-        assert!(result.is_ok());
-        let result = result.unwrap();
 
         assert_eq!(result.len(), 2);
-        assert_eq!(result.get(0).unwrap().0.as_str(), "us");
-        assert_eq!(result.get(0).unwrap().1, None);
+        assert_eq!(result.first().unwrap().0.as_str(), "us");
+        assert_eq!(result.first().unwrap().1, None);
         assert_eq!(result.get(1).unwrap().0.as_str(), "ca");
         let variant = result.get(1).unwrap().1.clone();
         assert!(variant.is_some());
