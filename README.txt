@@ -12,4 +12,4 @@ Supported platforms
 - Cinnamon (no support from DE)
 - sway
 - Hyprland
-- COSMIC Epoch
+- COSMIC Epoch (behind feature flag)

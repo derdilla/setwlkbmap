@@ -2,7 +2,6 @@
 #![allow(clippy::missing_errors_doc)]
 
 use crate::command::ExecutableWithError;
-use cosmic_config::{ConfigGet, ConfigSet};
 use detect_desktop_environment::DesktopEnvironment;
 use regex::Regex;
 use std::env;
@@ -241,9 +240,18 @@ fn set_keymap_hyprland(layout: Option<String>, variant: Option<String>) -> Resul
 }
 
 
-const COSMIC_COMP_CONFIG: &str = "com.system76.CosmicComp";
-const COSMIC_COMP_CONFIG_VERSION: u64 = 1;
+#[cfg(not(feature = "cosmic"))]
+fn set_keymap_cosmic_epoch(_layout: Option<String>, _variant: Option<String>) -> Result<(), String> {
+    Err("COSMIC epoch support was disabled during build.".to_string())
+}
+
+#[cfg(feature = "cosmic")]
 fn set_keymap_cosmic_epoch(layout: Option<String>, variant: Option<String>) -> Result<(), String> {
+    use cosmic_config::{ConfigGet, ConfigSet};
+
+    const COSMIC_COMP_CONFIG: &str = "com.system76.CosmicComp";
+    const COSMIC_COMP_CONFIG_VERSION: u64 = 1;
+
     // Do it the same way their settings app does it:
     // https://github.com/pop-os/cosmic-settings/blob/master/cosmic-settings/src/pages/input/keyboard/mod.rs
 

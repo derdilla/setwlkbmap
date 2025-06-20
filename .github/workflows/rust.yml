@@ -15,9 +15,6 @@ jobs:
 
       - name: Setup Rust
         run: |
-          sudo sed -i 's/azure.archive.ubuntu.com/archive.ubuntu.com/' /etc/apt/sources.list
-          sudo apt-get -qq update
-          sudo apt install -qq -y libudev-dev
           rustup toolchain install stable
           rustup default stable
       - uses: Swatinem/rust-cache@v2.7.8
@@ -29,7 +26,7 @@ jobs:
           cargo clippy --version
 
       - name: Clippy
-        run: cargo clippy --all-targets --all-features
+        run: cargo clippy --all-targets
 
       - name: Test
         run: cargo test --all
@@ -43,12 +40,9 @@ jobs:
 
       - name: Setup Rust
         run: |
-          sudo sed -i 's/azure.archive.ubuntu.com/archive.ubuntu.com/' /etc/apt/sources.list
-          sudo apt-get -qq update
-          sudo apt install -qq -y libudev-dev
           rustup toolchain install stable
           rustup default stable
-      #          rustup target add x86_64-unknown-linux-musl TODO: make blockers optional features
+          rustup target add x86_64-unknown-linux-musl
 
       - uses: Swatinem/rust-cache@v2.7.8
 
@@ -58,7 +52,7 @@ jobs:
           cargo --version
 
       - name: Build
-        run: cargo build --all --release
+        run: cargo build --release
 
       - uses: actions/upload-artifact@v4.6.2
         with:
