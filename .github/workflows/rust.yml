@@ -6,7 +6,7 @@ env:
   RUSTFLAGS: --deny warnings
 
 jobs:
-  all:
+  qc:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
@@ -15,7 +15,8 @@ jobs:
 
       - name: Setup Rust
         run: |
-          sudo apt install -qq -y libudev-dev
+          sudo apt-get update
+          sudo apt-get install -y libdrm-dev libudev-dev libgbm-dev libxkbcommon-dev libegl1-mesa-dev libwayland-dev libinput-dev libdbus-1-dev libsystemd-dev libseat-dev libdisplay-info-dev
           rustup toolchain install stable
       - uses: Swatinem/rust-cache@v2.7.8
 
@@ -40,7 +41,8 @@ jobs:
 
       - name: Setup Rust
         run: |
-          sudo apt-get install libudev-dev
+          sudo apt-get update;
+          sudo apt-get install -y libdrm-dev libudev-dev libgbm-dev libxkbcommon-dev libegl1-mesa-dev libwayland-dev libinput-dev libdbus-1-dev libsystemd-dev libseat-dev libdisplay-info-dev
           rustup toolchain install stable
 #          rustup target add x86_64-unknown-linux-musl TODO: make blockers optional features
 
