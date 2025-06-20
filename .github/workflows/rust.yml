@@ -6,7 +6,7 @@ env:
   RUSTFLAGS: --deny warnings
 
 jobs:
-  qc:
+  all:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4.2.2
@@ -15,9 +15,11 @@ jobs:
 
       - name: Setup Rust
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libdrm-dev libudev-dev libgbm-dev libxkbcommon-dev libegl1-mesa-dev libwayland-dev libinput-dev libdbus-1-dev libsystemd-dev libseat-dev libdisplay-info-dev
+          sudo sed -i 's/azure.archive.ubuntu.com/archive.ubuntu.com/' /etc/apt/sources.list
+          sudo apt-get -qq update
+          sudo apt install -qq -y libudev-dev
           rustup toolchain install stable
+          rustup default stable
       - uses: Swatinem/rust-cache@v2.7.8
 
       - name: Info
@@ -41,10 +43,12 @@ jobs:
 
       - name: Setup Rust
         run: |
-          sudo apt-get update;
-          sudo apt-get install -y libdrm-dev libudev-dev libgbm-dev libxkbcommon-dev libegl1-mesa-dev libwayland-dev libinput-dev libdbus-1-dev libsystemd-dev libseat-dev libdisplay-info-dev
+          sudo sed -i 's/azure.archive.ubuntu.com/archive.ubuntu.com/' /etc/apt/sources.list
+          sudo apt-get -qq update
+          sudo apt install -qq -y libudev-dev
           rustup toolchain install stable
-#          rustup target add x86_64-unknown-linux-musl TODO: make blockers optional features
+      #          rustup target add x86_64-unknown-linux-musl TODO: make blockers optional features
+          rustup default stable
 
       - uses: Swatinem/rust-cache@v2.7.8
 
@@ -52,7 +56,6 @@ jobs:
         run: |
           rustup --version
           cargo --version
-          cargo clippy --version
 
       - name: Build
         run: cargo build --all --release

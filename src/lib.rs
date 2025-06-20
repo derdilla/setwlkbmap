@@ -193,6 +193,7 @@ fn set_keymap_sway(layout: Option<String>, variant: Option<String>) -> Result<()
     Ok(())
 }
 
+#[allow(clippy::format_push_string)]
 fn set_keymap_hyprland(layout: Option<String>, variant: Option<String>) -> Result<(), String> {
     // We can parse the current configuration from: `hyprctl getoption input:kb_layout`
     // 
